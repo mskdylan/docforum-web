@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useFormat } from '../../../i18n/useFormat';
 import type { CareStepStatus, CareStepType, CareThread, CareThreadStep } from '../../../types/models';
+import { useTimeZone } from '../../../i18n/TimeZoneProvider';
+import { formatDate } from '../../../i18n/time-zone';
+import { DualZoneTime } from '../../../i18n/components/ZonedTime';
 import styles from './CareTimeline.module.css';
 
 interface CareTimelineProps {
@@ -52,8 +54,7 @@ function formatStatus(status: CareStepStatus): string {
 }
 
 export function CareTimeline({ thread, isLoading = false }: CareTimelineProps) {
-  const { formatDate, formatDateTime } = useFormat();
-
+  const { timeZone } = useTimeZone();
   if (isLoading) {
     return (
       <div className={styles.timelineContainer}>
@@ -84,16 +85,14 @@ export function CareTimeline({ thread, isLoading = false }: CareTimelineProps) {
   const isPartialConcludedAtConsultation = hasConsultation && !hasSubsequentSteps;
 
   return (
-    <section className={styles.timelineContainer} aria-label="Care thread timeline">
+    <div className={styles.timelineContainer} aria-label="Care thread timeline">
       <div className={styles.timelineHeader}>
         <div>
           <span className={styles.statusPill}>{thread.status} care episode</span>
           <h2 className={styles.threadTitle}>{thread.title}</h2>
           <div className={styles.threadMeta}>
             <span>Doctor: {thread.doctorName} ({thread.specialty})</span>
-            <span>
-              Started: <time dateTime={thread.startedAt}>{formatDate(thread.startedAt)}</time>
-            </span>
+            <span>Started: {formatDate(thread.startedAt, timeZone)}</span>
           </div>
         </div>
       </div>
@@ -119,7 +118,14 @@ export function CareTimeline({ thread, isLoading = false }: CareTimelineProps) {
 
                 {step.timestamp && (
                   <div className={styles.stepTimestamp}>
-                    <time dateTime={step.timestamp}>{formatDateTime(step.timestamp)}</time>
+                    <DualZoneTime
+                      value={step.timestamp}
+                      counterpartZone={
+                        typeof step.metadata?.doctorTimeZone === 'string'
+                          ? step.metadata.doctorTimeZone
+                          : null
+                      }
+                    />
                   </div>
                 )}
 
@@ -137,12 +143,12 @@ export function CareTimeline({ thread, isLoading = false }: CareTimelineProps) {
       </ol>
 
       {isPartialConcludedAtConsultation && (
-        <div className={styles.partialNotice} role="note">
+        <div className={styles.partialNotice}>
           <strong>Care Episode Concluded:</strong> Following the consultation, no specialist referrals or diagnostic
           laboratory orders were deemed necessary by {thread.doctorName}. You can review your clinical notes or book a
           follow-up if needed.
         </div>
       )}
-    </section>
+    </div>
   );
 }

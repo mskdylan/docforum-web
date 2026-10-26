@@ -8,8 +8,6 @@ import { Button } from '../../../components/Button';
 import { TextField } from '../../../components/TextField';
 import { Spinner } from '../../../components/Spinner';
 import { FormError } from '../../../components/FormError';
-import { useErrorMessage } from '../../../hooks/useErrorText';
-import { useT } from '../../../i18n/useT';
 import styles from './FacilityFinder.module.css';
 
 interface FacilityFinderProps {
@@ -18,8 +16,6 @@ interface FacilityFinderProps {
 }
 
 export function FacilityFinder({ initialType, onFacilityChosen }: FacilityFinderProps) {
-  const t = useT();
-  const errorMessage = useErrorMessage();
   const [selectedType, setSelectedType] = useState<FacilityType | undefined>(initialType);
   const [areaQuery, setAreaQuery] = useState('');
   const [selectedFacilityId, setSelectedFacilityId] = useState<string | null>(null);
@@ -127,7 +123,7 @@ export function FacilityFinder({ initialType, onFacilityChosen }: FacilityFinder
       </div>
 
       {searchError && (
-        <FormError message={errorMessage(searchError) ?? t('facilityFinder.fetchError', 'Error fetching facilities')} />
+        <FormError message={searchError instanceof Error ? searchError.message : 'Error fetching facilities'} />
       )}
 
       {isSearching && (

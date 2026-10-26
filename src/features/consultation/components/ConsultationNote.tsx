@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useT } from '../../../i18n/useT';
 import { useParams } from 'react-router-dom';
 import { useConsultationNote, useSignOffNote, useAddAddendum } from '../hooks/useConsultationNote';
 import { useAppointment } from "../../appointment/hooks/useAppointment";
 import { useNavigate } from "react-router-dom";
 import { Button } from '../../../components/Button';
+import { ConsultationOutcomePanel } from './ConsultationOutcomePanel';
 import { useTimeZone } from '../../../i18n/TimeZoneProvider';
 import { formatDateTime as formatZonedDateTime } from '../../../i18n/time-zone';
-import { ConsultationOutcomePanel } from './ConsultationOutcomePanel';
 import styles from './ConsultationNote.module.css';
 
 const NOTE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -33,7 +32,6 @@ export function ConsultationNote({ appointmentId: appointmentIdProp }: Consultat
   const navigate = useNavigate();
 
   const [draft, setDraft] = useState(query.data?.content ?? '');
-  const t = useT();
   const [addendumContent, setAddendumContent] = useState('');
   const [confirmingSignOff, setConfirmingSignOff] = useState(false);
   const [editing, setEditing] = useState(!Boolean(query.data?.signedAt));
@@ -81,23 +79,21 @@ export function ConsultationNote({ appointmentId: appointmentIdProp }: Consultat
     setAddendumContent('');
   };
 
-  if (query.isLoading) return <div className={styles.loading}>{t('consultation.loading', 'Loading note…')}</div>;
+  if (query.isLoading) return <div className={styles.loading}>Loading note…</div>;
   if (query.isError || !note) {
-    return <div className={styles.empty}>{t('consultation.loadError', 'Could not load this consultation note.')}</div>;
+    return <div className={styles.empty}>Could not load this consultation note.</div>;
   }
 
   return (
     <section className={styles.note}>
       <header className={styles.noteHeader}>
-        <h1>{t('consultation.title', 'Consultation note')}</h1>
+        <h2>Consultation note</h2>
         <span className={styles.status}>
-          {signed ? t('consultation.status.signed', 'Signed · locked') : t('consultation.status.draft', 'Draft')}
+          {signed ? 'Signed · locked' : 'Draft'}
         </span>
         {note.autoSignOffAt && !signed && (
           <span className={styles.deadline}>
-            {t('consultation.autoSignOff', 'Auto sign-off: {date}', {
-              date: formatZonedDateTime(note.autoSignOffAt, timeZone, NOTE_TIME_OPTIONS),
-            })}
+            Auto sign-off: {formatZonedDateTime(note.autoSignOffAt, timeZone, NOTE_TIME_OPTIONS)}
           </span>
         )}
         {appointmentQuery.data?.patientProfileId && (
@@ -123,7 +119,7 @@ export function ConsultationNote({ appointmentId: appointmentIdProp }: Consultat
                   Cancel
                 </Button>
                 <Button onClick={handleConfirmSignOff} loading={signOff.isPending}>
-                  {t("consultation.signAndLock", "Sign and lock")}
+                  Sign and lock
                 </Button>
               </div>
             </div>
@@ -131,11 +127,7 @@ export function ConsultationNote({ appointmentId: appointmentIdProp }: Consultat
             <>
               {editing ? (
                 <>
-                  <label htmlFor="consultation-note-content" className="srOnly">
-                    Consultation note content
-                  </label>
                   <textarea
-                    id="consultation-note-content"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     className={styles.content}
@@ -146,17 +138,17 @@ export function ConsultationNote({ appointmentId: appointmentIdProp }: Consultat
                       Discard
                     </Button>
                     <Button onClick={handleSave} loading={false}>
-                      {t("consultation.saveDraft", "Save draft")}
+                      Save draft
                     </Button>
-                    <Button onClick={handleSignOff}>{t("consultation.signAndLock", "Sign and lock")}</Button>
+                    <Button onClick={handleSignOff}>Sign and lock</Button>
                   </div>
                 </>
               ) : (
                 <>
                   <div className={styles.contentReadOnly}>{note.content}</div>
                   <div className={styles.actions}>
-                    <Button onClick={() => setEditing(true)}>{t("consultation.editNote", "Edit note")}</Button>
-                    <Button onClick={handleSignOff}>{t("consultation.signAndLock", "Sign and lock")}</Button>
+                    <Button onClick={() => setEditing(true)}>Edit note</Button>
+                    <Button onClick={handleSignOff}>Sign and lock</Button>
                   </div>
                 </>
               )}
@@ -166,22 +158,14 @@ export function ConsultationNote({ appointmentId: appointmentIdProp }: Consultat
       ) : (
         <>
           <div className={styles.contentReadOnly}>{note.content}</div>
-          <div className={styles.signedBadge}>
-            {t('consultation.signedAt', 'Signed {date}', {
-              date: formatZonedDateTime(note.signedAt, timeZone, NOTE_TIME_OPTIONS),
-            })}
-          </div>
+          <div className={styles.signedBadge}>Signed {formatZonedDateTime(note.signedAt, timeZone, NOTE_TIME_OPTIONS)}</div>
 
-          <h2 className={styles.addendaHeading}>{t('consultation.addenda', 'Addenda')}</h2>
+          <h3 className={styles.addendaHeading}>Addenda</h3>
           <div className={styles.addendumComposer}>
-            <label htmlFor="consultation-addendum" className="srOnly">
-              Addendum content
-            </label>
             <textarea
-              id="consultation-addendum"
               value={addendumContent}
               onChange={(e) => setAddendumContent(e.target.value)}
-              placeholder={t('consultation.addendumPlaceholder', 'Add an addendum…')}
+              placeholder="Add an addendum…"
               className={styles.addendumInput}
               spellCheck={false}
             />
@@ -204,7 +188,7 @@ export function ConsultationNote({ appointmentId: appointmentIdProp }: Consultat
             ))}
             {note.addenda.length === 0 && (
               <li className={styles.addendumItem}>
-                <span className={styles.emptyAddenda}>{t("consultation.noAddenda", "No addenda yet.")}</span>
+                <span className={styles.emptyAddenda}>No addenda yet.</span>
               </li>
             )}
           </ul>

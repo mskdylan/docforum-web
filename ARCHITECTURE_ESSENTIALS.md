@@ -5,7 +5,6 @@ Frontend-only quick reference. Full product/system architecture lives in
 those first if you're new to the org, not just this file.
 
 ## Stack
-
 - React + TypeScript + Vite
 - React Query for server state, Zustand for client-only UI state
 - No localStorage/sessionStorage for anything server-derived — treat
@@ -24,20 +23,25 @@ those first if you're new to the org, not just this file.
 2. Mirror `docforum-core`'s data model shapes in `src/types/models.ts` —
    don't invent parallel frontend-only shapes for the same entities.
 3. Structure: `pages/ components/ features/ hooks/ services/ store/ types/`
-   — keep this shape. `src/i18n/` was added in Phase W7 for locale-aware
-   formatting and direction (issue #88); it is not a place for business
-   logic.
+   — keep this shape.
 
 ## Where things live
-
-- `src/services/` — API calls to `docforum-core`. `api-client.ts` is the only
-  place fetch/base-URL/credentials/auth/error-envelope details live.
-- `src/mocks/` — MSW mock API for `npm run dev:mock`. It is loaded only behind
-  the development guard in `main.tsx`; CI checks that mock code is absent from
-  production bundles.
-- `src/features/` — flow-specific logic.
+- `src/services/` — API client calls to `docforum-core`. `api-client.ts` is
+  the only place fetch/base-URL/error-envelope details live.
+- `src/mocks/` — MSW mock API for `npm run dev:mock` (issue #95). Handlers
+  mirror the same real/assumed contracts `src/services/` calls, over
+  obviously fake `example.test` fixtures. Loaded only behind the
+  `import.meta.env.DEV && VITE_ENABLE_MOCKS` guard in `main.tsx`, before
+  the first render; production bundles must never contain it — CI enforces
+  this via `npm run check:dist`. When an assumed contract in this file is
+  reconciled, update `src/mocks/` fixtures/handlers in the same PR.
+- `src/features/` — flow-specific logic (booking, referral-accept, order
+  fulfillment selection, etc.) — one feature folder per PRD core flow.
 - `src/pages/` — route-level components.
-- `src/store/` — Zustand stores. Auth and acting-for state are in memory.
+- `src/store/` — Zustand stores. `auth-store.ts` is intentionally
+  in-memory only (not persisted) — see hard rule about
+  localStorage/sessionStorage above; it applies to auth tokens too, not
+  just business data.
 
 ## Query keys & cache invalidation (issue #122)
 React Query caches everything this app fetches. Two files own the key
@@ -89,7 +93,6 @@ appointment list") until booking (#2) and the patient appointment list (#3)
 land and consume `appointmentKeys.list(profileId)`.
 
 ## Deployment
-
 - GitHub Pages, deployed on every push to `main` via
   `.github/workflows/deploy-pages.yml`: https://docforum.github.io/docforum-web/
 - **Connected to a live backend as of 2026-09-14** —
@@ -178,16 +181,6 @@ endpoint paths, request/response shapes, a privacy-notice source, or wallet
 verification semantics. The boundary check in
 `scripts/check-stellar-boundary.mjs` guards the direct-network prohibition
 while that work remains outstanding.
-
-- **W7 browser suites (#91–#94)**: Playwright uses the existing `src/mocks/`
-  browser handlers and `example.test` fixtures. No new API shape is assumed.
-  Fraunces and IBM Plex Sans are served locally so visual baselines do not
-  depend on a third-party font response at test time.
-  Patient doctor search/booking/intake/appointments and doctor order issuance
-  screens are absent, so their browser journeys remain uncovered until those
-  routes exist. The existing mock payment intent uses the provisional W5
-  contract already documented below. Browser MSW startup is awaited before
-  the first React render to avoid an unmocked request race.
 
 - **Platform theming & preference storage**: Theme preferences (`light`, `dark`, or `high-contrast`) are saved in `localStorage` under the key `docforum-theme`. If no explicit choice is stored, the UI automatically falls back to system media queries (`prefers-color-scheme: dark` and `prefers-contrast: high`). A pre-hydration inline script in `index.html` inspects this state immediately to set the `data-theme` attribute on `<html>`, preventing pre-hydration white flash on load.
 
@@ -589,54 +582,6 @@ everything below is assumed and mirrored in `models.ts` under "Phase W7".
   - Approaching deadline warnings: prominent alerts when held escrow refund deadline is < 48 hours away and order is unfulfilled (Threat Model T8 compliance).
   - Direct explorer links to Stellar testnet transactions (`https://stellar.expert/explorer/testnet/tx/...`).
 
-## Generated contract
-
-All API routes covered by this repository's typed client are declared in
-`packages/api-client/openapi/docforum-core.openapi.yaml`. The generated
-`@docforum/api-client` package owns the paths, request payloads, response
-schemas, error envelope shape, and BigInt-as-string payment fields. Run
-`npm run generate:api` after changing the fixture; `npm run typecheck` and
-`npm run build` run generation automatically.
-
-The following contracts are generated and are no longer frontend assumptions:
-
-- W2 dependents, health profile, data export, account deletion, care threads,
-  and facility finder.
-- W3 queue, messaging, consultation notes, and practice insights.
-- W4 facility members, invitations, and fulfillment attribution.
-- W5 custodial payment intents and wallet-link operations.
-
-`src/types/models.ts` re-exports generated schema types for compatibility with
-existing imports. Services call the generated client through
-`src/services/api-client.ts`, which remains the only owner of transport details
-and typed errors.
-
-## Known assumptions
-
-- Acting-for profile selection is frontend-only Zustand state. The selected
-  patient profile id is included in patient query keys and API calls.
-- The local OpenAPI fixture is vendored until docforum-core publishes the
-  versioned package described by docforum-core#113. CI compares its version
-  with the backend's published spec in warn-only mode.
-- Error code meanings are sourced from docforum-core#115. Unknown codes use a
-  generic localized message and request-id reference; raw server messages are
-  retained only for diagnostics.
-- W4 scan-to-verify and payout-ledger routes, plus W6 admin audit/access,
-  referral, system-health, and feature-flag routes, still have compatibility
-  types until their backend OpenAPI schemas are published. Their assumptions
-  are isolated in `src/types/models.ts` and the relevant service modules.
-- Theme preferences are stored under `docforum-theme` in local storage and
-  fall back to system media queries when unset.
-
-## Privacy and platform guarantees
-
-- `src/pwa/sw.ts` precaches only the app shell and static assets. It has no
-  runtime API caching route, so authenticated API responses never enter the
-  service-worker cache.
-- Logout clears app-owned caches while preserving static precache entries.
-- Facility-search location is transient browser memory only and is never
-  persisted to storage or URLs.
-
 ### Error monitoring (issue #100)
 
 - **SDK:** `@sentry/react` (browser SDK), initialized in `src/main.tsx:48`.
@@ -647,6 +592,12 @@ and typed errors.
 - **What is sent (scrubbed):** the error message and exception type, the HTTP method, a sanitized URL (host + route shape only; query string dropped, id-like path segments replaced with `[id-redacted]`), and an opaque user id only. Benign extra/contexts/tags pass through with sensitive keys redacted.
 - **CSP:** Sentry is bundled via npm — there is no external `<script>` to whitelist. The only network target is `*.sentry.io`, and only when a DSN is configured; if a CSP is adopted, add `connect-src https://*.sentry.io`.
 
+
+### Content Security Policy (issue #101; Zod interaction from #99)
+
+- The production policy is injected as a `<meta http-equiv="Content-Security-Policy">` tag by the `cspPlugin` in `vite.config.ts` (strict: `script-src 'self'`, no inline scripts/styles, `require-trusted-types-for 'script'`); dev builds get a relaxed policy because Vite HMR and React Fast Refresh need inline scripts and `eval`.
+- GitHub Pages cannot set HTTP response headers, so the meta tag is the enforcement point (see `ARCHITECTURE_ESSENTIALS.md` “Deployment”). `frame-ancestors` is therefore deliberately absent from the meta policy: Chrome ignores it inside `<meta>` and logs a console error on every page load (which fails Lighthouse `errors-in-console` in CI). Clickjacking protection requires an HTTP header and remains an open gap on Pages.
+- `require-trusted-types-for 'script'` blocks `new Function`, which Zod v4's JIT uses to compile validators. Zod catches the rejection and falls back to its interpreter, but the browser still logs a TrustedScript error — so `src/zod-csp.ts` (the first import of `src/main.tsx`) calls `config({ jitless: true })` to skip the JIT entirely. Do not widen the policy with `'unsafe-eval'`; if another dependency needs `eval`, prefer its no-eval switch first.
 
 ### Phase W7 — Platform quality (issues #116–#119)
 

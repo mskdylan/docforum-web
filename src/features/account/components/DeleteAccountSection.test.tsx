@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '../../../test/render';
 import userEvent from '@testing-library/user-event';
 import { DeleteAccountSection } from './DeleteAccountSection';
 import * as accountService from '../../../services/account-service';
-import { ApiError } from '../../../services/api-client';
 import { useAuthStore } from '../../../store/auth-store';
 import { useProfileStore } from '../../../store/profile-store';
 
@@ -69,9 +68,7 @@ describe('DeleteAccountSection', () => {
 
   it('displays error message when backend blocks deletion (e.g. active orders/escrows)', async () => {
     vi.mocked(accountService.deleteAccount).mockRejectedValue(
-      new ApiError('Cannot delete account while you have active orders or unreleased escrows.', 409, undefined, {
-        code: 'ACCOUNT_DELETE_BLOCKED',
-      }),
+      new Error('Cannot delete account while you have active orders or unreleased escrows.'),
     );
 
     const user = userEvent.setup();
@@ -86,7 +83,7 @@ describe('DeleteAccountSection', () => {
     await user.click(deleteBtn);
 
     expect(
-      await screen.findByText(/cannot be deleted while orders or funded payments are still active/i),
+      await screen.findByText(/cannot delete account while you have active orders or unreleased escrows/i),
     ).toBeInTheDocument();
   });
 

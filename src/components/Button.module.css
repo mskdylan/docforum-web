@@ -4,7 +4,6 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.7rem 1.375rem;
-  min-height: var(--target-size);
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   font-family: var(--font-sans);
@@ -20,7 +19,7 @@
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .primary {
@@ -45,7 +44,7 @@
 
 .danger {
   background: var(--color-danger);
-  color: var(--color-danger-contrast);
+  color: #ffffff;
   border-color: transparent;
 }
 

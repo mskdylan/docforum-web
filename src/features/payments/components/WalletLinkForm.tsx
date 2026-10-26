@@ -5,7 +5,6 @@ import { FormError } from '../../../components/FormError';
 import { FormField } from '../../../components/form/FormField';
 import { useZodForm } from '../../../hooks/useZodForm';
 import { mapServerErrors } from '../../../utils/form';
-import { useErrorMessage } from '../../../hooks/useErrorText';
 import { useLinkWallet, useOwnWalletLink } from '../hooks/useWalletLink';
 import { z } from 'zod';
 import { ApiError } from '../../../services/api-client';
@@ -31,7 +30,6 @@ export function WalletLinkForm() {
   const form = useZodForm(walletSchema, { publicKey: '' });
   const walletQuery = useOwnWalletLink();
   const linkMutation = useLinkWallet();
-  const errorMessage = useErrorMessage();
   const [serverError, setServerError] = useState<string | null>(null);
 
   async function onSubmit(data: WalletFormData) {
@@ -47,8 +45,10 @@ export function WalletLinkForm() {
           });
           return;
         }
+        setServerError(error.message ?? 'Something went wrong. Please try again.');
+      } else {
+        setServerError('Something went wrong. Please try again.');
       }
-      setServerError(errorMessage(error));
     }
   }
 

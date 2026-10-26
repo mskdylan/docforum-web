@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { UtilisationWeek } from '../../../types/models';
-import { useFormat } from '../../../i18n/useFormat';
 import styles from './PracticeInsights.module.css';
 
 interface UtilisationChartProps {
@@ -18,7 +17,6 @@ export function UtilisationChart({
   overallUtilisationRate,
   sampleSizeWarning,
 }: UtilisationChartProps) {
-  const { formatDate, formatNumber, formatPercent } = useFormat();
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
   const maxSlots = Math.max(1, ...weeks.map((w) => Math.max(w.offeredSlots, w.bookedSlots)));
@@ -56,7 +54,7 @@ export function UtilisationChart({
         <div className={styles.caveatBanner} role="note">
           <span className={styles.caveatPill}>Small sample caveat</span>
           <span>
-            Only {formatNumber(overallOfferedSlots)} slots offered in this period. Percentage utilisation figures can fluctuate significantly with limited data points.
+            Only {overallOfferedSlots} slots offered in this period. Percentage utilisation figures can fluctuate significantly with limited data points.
           </span>
         </div>
       )}
@@ -64,17 +62,17 @@ export function UtilisationChart({
       <div className={styles.summaryGrid}>
         <div className={styles.summaryStat}>
           <span className={styles.statLabel}>Offered slots</span>
-          <span className={styles.statValue}>{formatNumber(overallOfferedSlots)}</span>
+          <span className={styles.statValue}>{overallOfferedSlots}</span>
           <span className={styles.statHint}>Total availability</span>
         </div>
         <div className={styles.summaryStat}>
           <span className={styles.statLabel}>Booked slots</span>
-          <span className={styles.statValue}>{formatNumber(overallBookedSlots)}</span>
+          <span className={styles.statValue}>{overallBookedSlots}</span>
           <span className={styles.statHint}>Patient reservations</span>
         </div>
         <div className={styles.summaryStat}>
           <span className={styles.statLabel}>Utilisation rate</span>
-          <span className={styles.statValue}>{formatPercent(overallUtilisationRate)}</span>
+          <span className={styles.statValue}>{overallUtilisationRate.toFixed(1)}%</span>
           <span className={styles.statHint}>Booked / Offered</span>
         </div>
       </div>
@@ -110,11 +108,8 @@ export function UtilisationChart({
               const offeredY = 190 - offeredHeight;
               const bookedY = 190 - bookedHeight;
 
-              // The chart has one accessible name; the adjacent table is
-              // the keyboard/screen-reader source of detail. Individual bars
-              // must not be focusable.
               return (
-                <g key={w.weekLabel} aria-hidden="true">
+                <g key={w.weekLabel} tabIndex={0} aria-label={`${w.weekLabel}: ${w.bookedSlots} of ${w.offeredSlots} slots booked (${w.utilisationRate.toFixed(1)}%)`}>
                   {/* Offered slot bar (surface/accent light) */}
                   <rect
                     x={xCenter - barWidth - 2}
@@ -143,7 +138,7 @@ export function UtilisationChart({
                     fill="var(--color-text)"
                     textAnchor="middle"
                   >
-                    {formatPercent(w.utilisationRate, 0)}
+                    {w.utilisationRate.toFixed(0)}%
                   </text>
                   {/* X axis week label */}
                   <text
@@ -191,13 +186,11 @@ export function UtilisationChart({
             {weeks.map((w) => (
               <tr key={w.weekLabel}>
                 <th scope="row">{w.weekLabel}</th>
-                <td>
-                  {formatDate(w.startDate)} – {formatDate(w.endDate)}
-                </td>
-                <td className="num">{formatNumber(w.offeredSlots)}</td>
-                <td className="num">{formatNumber(w.bookedSlots)}</td>
-                <td className="num">{formatNumber(w.completedSlots)}</td>
-                <td className="num">{formatPercent(w.utilisationRate)}</td>
+                <td>{w.startDate} to {w.endDate}</td>
+                <td className="num">{w.offeredSlots}</td>
+                <td className="num">{w.bookedSlots}</td>
+                <td className="num">{w.completedSlots}</td>
+                <td className="num">{w.utilisationRate.toFixed(1)}%</td>
               </tr>
             ))}
           </tbody>

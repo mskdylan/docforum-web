@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useT } from '../../../i18n/useT';
 import { Button } from '../../../components/Button';
-import { RemoveMemberModal } from './RemoveMemberModal';
 import { useTimeZone } from '../../../i18n/TimeZoneProvider';
 import { formatDate } from '../../../i18n/time-zone';
+import { RemoveMemberModal } from './RemoveMemberModal';
 import type { FacilityMember } from '../../../types/models';
 import styles from './FacilityTeam.module.css';
 
@@ -21,7 +20,6 @@ export function FacilityMemberList({
   isRemoving,
 }: FacilityMemberListProps) {
   const [selectedMember, setSelectedMember] = useState<FacilityMember | null>(null);
-  const t = useT();
   const { timeZone } = useTimeZone();
 
   const ownerCount = members.filter((m) => m.role === 'owner').length;
@@ -30,25 +28,22 @@ export function FacilityMemberList({
     <section className={styles.card} aria-labelledby="members-heading">
       <div className={styles.cardHeader}>
         <div>
-          <h2 id="members-heading">{t('facilityTeam.membersTitle', 'Facility members')}</h2>
+          <h2 id="members-heading">Facility members</h2>
           <p className={styles.headerSubtitle}>
-            {t('facilityTeam.membersSubtitle', 'Current staff and owners with access to this facility.')}
+            Current staff and owners with access to this facility.
           </p>
         </div>
       </div>
 
       <div className={styles.tableWrapper}>
-        <table className={styles.dataTable}>
-          <caption className="srOnly">
-            Facility team members with their role and join date
-          </caption>
+        <table className={styles.dataTable} aria-label="Facility team members">
           <thead>
             <tr>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">Role</th>
               <th scope="col">Joined</th>
-              {isOwner && <th scope="col" className={styles.actionCell}>Actions</th>}
+              {isOwner && <th scope="col" style={{ textAlign: 'right' }}>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -57,12 +52,10 @@ export function FacilityMemberList({
 
               return (
                 <tr key={m.id}>
-                  <th scope="row">
+                  <td>
                     <strong>{m.fullName}</strong>
-                    {m.isCurrentUser && (
-                      <span className={styles.youBadge}>{t('facilityTeam.youBadge', 'You')}</span>
-                    )}
-                  </th>
+                    {m.isCurrentUser && <span className={styles.youBadge}>You</span>}
+                  </td>
                   <td>{m.email}</td>
                   <td>
                     <span
@@ -73,9 +66,7 @@ export function FacilityMemberList({
                       {m.role}
                     </span>
                   </td>
-                  <td>
-                    <time dateTime={m.joinedAt}>{formatDate(m.joinedAt, timeZone)}</time>
-                  </td>
+                  <td>{formatDate(m.joinedAt, timeZone)}</td>
                   {isOwner && (
                     <td className={styles.actionCell}>
                       <Button

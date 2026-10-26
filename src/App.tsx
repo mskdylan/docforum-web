@@ -1,6 +1,5 @@
+import { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { I18nProvider } from './i18n/I18nProvider';
 import { HashRedirectShim } from './components/HashRedirectShim';
 import { useAnalyticsPageview } from './hooks/useAnalyticsPageview';
 import { Layout } from './components/Layout';
@@ -42,7 +41,6 @@ import { FacilityInsightsPage } from './pages/FacilityInsightsPage';
 import { PatientChartPage } from "./pages/PatientChartPage";
 import { MessageThreadPage } from './pages/MessageThreadPage';
 import { NotificationSettingsPage } from './pages/NotificationSettingsPage';
-import { UpdatePromptContainer } from './pwa/UpdatePromptContainer';
 
 const useHashRouter = import.meta.env.VITE_USE_HASH_ROUTER === 'true';
 
@@ -50,11 +48,9 @@ export default function App() {
   useAnalyticsPageview();
 
   return (
-    <I18nProvider>
-      <ErrorBoundary level="app">
-        <>
-          {!useHashRouter && <HashRedirectShim />}
-          <Routes>
+    <>
+      {!useHashRouter && <HashRedirectShim />}
+      <Routes>
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="login" element={<LoginPage />} />
@@ -156,7 +152,7 @@ export default function App() {
         } />
         <Route path="doctor/messages" element={
           <RequireAuth allowedRoles={['doctor']}>
-            <div className="container"><h1>Messages</h1><DoctorInbox /></div>
+            <DoctorInbox />
           </RequireAuth>
         } />
         <Route path="doctor/messages/:threadId" element={
@@ -303,10 +299,7 @@ export default function App() {
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-          </Routes>
-          <UpdatePromptContainer />
-        </>
-      </ErrorBoundary>
-    </I18nProvider>
+    </Routes>
+    </>
   );
 }

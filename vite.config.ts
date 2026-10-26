@@ -1,6 +1,6 @@
-import { configDefaults, defineConfig, type Plugin } from 'vitest/config';
+import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // GitHub Pages serves this as a project site at /docforum-web/, not the
 // domain root — base must match or every asset URL 404s. Only applied for
@@ -15,6 +15,15 @@ import { VitePWA } from 'vite-plugin-pwa';
 //     API preconnect are same-origin or listed explicitly.
 // The plugin injects `<meta http-equiv="Content-Security-Policy">` into
 // index.html on every dev request and on the production build output.
+//
+// Notes that keep the policy enforceable without console noise:
+//   - `frame-ancestors` is NOT in the meta policy: Chrome drops it from
+//     <meta> entirely and logs a console error on every page load (which
+//     fails Lighthouse's errors-in-console check). It can only be enforced
+//     via an HTTP response header, which GitHub Pages cannot set.
+//   - Zod v4's JIT compiles validators with `new Function`, which this
+//     policy blocks. `src/zod-csp.ts` runs Zod in `jitless` mode instead of
+//     widening the policy — see that file.
 
 const PROD_CSP = [
   "default-src 'self'",
@@ -25,7 +34,6 @@ const PROD_CSP = [
   "img-src 'self' data:",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'", // ignored in a meta tag; enforced via HTTP header where supported
   "require-trusted-types-for 'script'", // Chrome/Edge; no DOM XSS sinks in the app
 ].join('; ');
 
@@ -58,56 +66,18 @@ export default defineConfig(({ command }) => {
     plugins: [
       react(),
       cspPlugin(isProd),
-      VitePWA({
-        // injectManifest (not generateSW) so the caching policy is real,
-        // reviewable source: src/pwa/sw.ts. Only the app shell + hashed static
-        // assets are precached; there is no runtime caching, so API responses
-        // can never be stored by the worker (issue #86).
-        strategies: 'injectManifest',
-        srcDir: 'src/pwa',
-        filename: 'sw.ts',
-        registerType: 'prompt',
-        // Registration is handled by UpdatePromptContainer via
-        // virtual:pwa-register/react so the "update available" banner can hook in.
-        injectRegister: false,
-        includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
-        manifest: {
-          name: 'DocForum',
-          short_name: 'DocForum',
-          description: 'Care continuity, escrow-secured fulfillment.',
-          lang: 'en',
-          theme_color: '#1f4d3a',
-          background_color: '#faf6f0',
-          display: 'standalone',
-          orientation: 'portrait',
-          // Relative URLs resolve against the manifest's own location, which is
-          // what makes the same manifest work at / and at /docforum-web/.
-          start_url: '.',
-          scope: '.',
-          icons: [
-            { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-            { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-            {
-              src: 'pwa-maskable-512x512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'maskable',
-            },
-          ],
-        },
-        injectManifest: {
-          globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-          // index.html is the HashRouter entry point; every route is served
-          // from it by the NavigationRoute in src/pwa/sw.ts.
-          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        },
-      }),
+      ...(process.env.ANALYZE === 'true'
+        ? [visualizer({ filename: 'dist/bundle-analysis.html', open: false, gzipSize: true, brotliSize: true })]
+        : []),
     ],
-    // The workspace package is TS source (not a prebuilt dist), so Vite must
-    // transpile it rather than pre-bundle it.
-    optimizeDeps: { exclude: ['@docforum/api-client'] },
+    build: {
+      // First-party source maps (issue #99): Lighthouse's valid-source-maps
+      // audit fails when large JS ships without maps, and they make
+      // production stack traces readable. Maps are only fetched when
+      // DevTools is open, so they don't affect load performance budgets.
+      sourcemap: true,
+    },
     test: {
-      exclude: [...configDefaults.exclude, 'e2e/**'],
       environment: 'happy-dom',
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
