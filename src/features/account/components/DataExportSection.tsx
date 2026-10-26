@@ -3,12 +3,9 @@ import { Button } from '../../../components/Button';
 import { TextField } from '../../../components/TextField';
 import { FormError } from '../../../components/FormError';
 import { Spinner } from '../../../components/Spinner';
-import { Dialog } from '../../../components/Dialog';
-import { useDataExport, useDownloadExport, useRequestDataExport } from '../hooks/useDataExport';
 import { useTimeZone } from '../../../i18n/TimeZoneProvider';
 import { formatDateTime } from '../../../i18n/time-zone';
-import { useT } from '../../../i18n/useT';
-import { useErrorMessage } from '../../../hooks/useErrorText';
+import { useDataExport, useDownloadExport, useRequestDataExport } from '../hooks/useDataExport';
 import styles from './DataExportSection.module.css';
 
 function formatBytes(bytes?: number | null): string {
@@ -24,8 +21,6 @@ export function DataExportSection() {
   const { data: exportData, isLoading, error: queryError } = useDataExport();
   const requestMutation = useRequestDataExport();
   const { download, isDownloading, downloadError } = useDownloadExport();
-  const t = useT();
-  const errorMessage = useErrorMessage();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [password, setPassword] = useState('');
@@ -57,12 +52,11 @@ export function DataExportSection() {
         setPassword('');
       },
       onError: (err) => {
-        setModalError(errorMessage(err));
+        setModalError(err instanceof Error ? err.message : 'Failed to request data export');
       },
     });
   };
 
-  const downloadErrorMessage = errorMessage(downloadError);
   const status = exportData?.status;
 
   return (
@@ -70,43 +64,45 @@ export function DataExportSection() {
       <div className={styles.header}>
         <div>
           <h2 id="export-heading" className={styles.title}>
-                {t('account.dataExport.downloadHeading', 'Download my data')}
-              </h2>
+            Download my data
+          </h2>
           <p className={styles.description}>
-            {t('account.dataExport.description', 'Patients have the right to access and download a full, machine-readable copy of their personal health records.')}
+            Patients have the right to access and download a full, machine-readable copy of their personal health
+            records.
           </p>
         </div>
       </div>
 
       <div className={styles.detailsBox}>
-        <strong>{t('account.dataExport.whatIncluded', 'What is included in your export bundle:')}</strong>
+        <strong>What is included in your export bundle:</strong>
         <ul className={styles.detailsList}>
-          <li>{t('account.dataExport.profileDetails', 'Profile details and verified contact records')}</li>
-          <li>{t('account.dataExport.appointmentHistory', 'Appointment history, consultation clinical summaries, and outcomes')}</li>
-          <li>{t('account.dataExport.referrals', 'Issued specialist referrals and fulfillment statuses')}</li>
-          <li>{t('account.dataExport.prescriptions', 'Prescriptions, laboratory test diagnostic orders, and attached results')}</li>
-          <li>{t('account.dataExport.paymentLogs', 'Cryptographic payment intent receipts and escrow settlement logs')}</li>
+          <li>Profile details and verified contact records</li>
+          <li>Appointment history, consultation clinical summaries, and outcomes</li>
+          <li>Issued specialist referrals and fulfillment statuses</li>
+          <li>Prescriptions, laboratory test diagnostic orders, and attached results</li>
+          <li>Cryptographic payment intent receipts and escrow settlement logs</li>
         </ul>
         <p style={{ margin: 'var(--space-2) 0 0', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-          {t('account.dataExport.note24h', 'Note: Ready exports are protected and remain available for download for <strong>24 hours</strong> before expiring for security.')}
+          Note: Ready exports are protected and remain available for download for <strong>24 hours</strong> before
+          expiring for security.
         </p>
       </div>
 
       {isLoading && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', color: 'var(--color-text-muted)' }}>
           <Spinner size={16} />
-          <span>{t('account.dataExport.checkingStatus', 'Checking export status…')}</span>
+          <span>Checking export status…</span>
         </div>
       )}
 
-      {queryError && <FormError message={errorMessage(queryError)} />}
-      {downloadErrorMessage && <FormError message={downloadErrorMessage} />}
+      {queryError && <FormError message={queryError instanceof Error ? queryError.message : 'Error loading export'} />}
+      {downloadError && <FormError message={downloadError} />}
 
       {!isLoading && !exportData && (
         <div>
           <Button type="button" onClick={handleOpenModal}>
-                {t('account.dataExport.requestExport', 'Request personal data export')}
-              </Button>
+            Request personal data export
+          </Button>
         </div>
       )}
 
@@ -123,18 +119,15 @@ export function DataExportSection() {
               }`}
             >
               {status === 'processing' || status === 'pending'
-                ? t('account.dataExport.statusProcessing', 'Processing export')
+                ? 'Processing export'
                 : status === 'ready'
-                  ? t('account.dataExport.statusReady', 'Ready for download')
+                  ? 'Ready for download'
                   : status === 'expired'
-                    ? t('account.dataExport.statusExpired', 'Export expired')
-                    : t('account.dataExport.statusFailed', 'Export failed')}
+                    ? 'Export expired'
+                    : 'Export failed'}
             </span>
             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-              Requested:{' '}
-              <time dateTime={exportData.requestedAt}>
-                {formatDateTime(exportData.requestedAt, timeZone)}
-              </time>
+              Requested: {formatDateTime(exportData.requestedAt, timeZone)}
             </span>
           </div>
 
@@ -142,7 +135,7 @@ export function DataExportSection() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
               <Spinner size={18} />
               <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-                {t('account.dataExport.generating', 'Your export bundle is being generated by docforum-core. This page updates automatically when ready.')}
+                Your export bundle is being generated by docforum-core. This page updates automatically when ready.
               </p>
             </div>
           )}
@@ -150,24 +143,18 @@ export function DataExportSection() {
           {status === 'ready' && (
             <div>
               <p style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--text-sm)' }}>
-                {t('account.dataExport.ready', 'Your data export is ready. Download it before it expires on')}{' '}
-                <strong>
-                  {exportData.expiresAt
-                    ? formatDateTime(exportData.expiresAt, timeZone)
-                    : t('account.dataExport.unknownExpiry', 'an unknown date')}
-                </strong>
-                .
+                Your data export is ready. Download it before it expires on <strong>{formatDateTime(exportData.expiresAt, timeZone)}</strong>.
               </p>
               <div className={styles.metaInfo} style={{ marginBottom: 'var(--space-3)' }}>
-                <span>{t('account.dataExport.fileSize', 'File size:')} {formatBytes(exportData.fileSizeBytes)}</span>
-                <span>{t('account.dataExport.format', 'Format:')} JSON bundle (FHIR-compatible)</span>
+                <span>File size: {formatBytes(exportData.fileSizeBytes)}</span>
+                <span>Format: JSON bundle (FHIR-compatible)</span>
               </div>
               <Button
                 type="button"
                 onClick={() => download(exportData.id, `docforum-export-${exportData.id}.json`)}
                 loading={isDownloading}
               >
-                {isDownloading ? t('account.dataExport.downloading', 'Downloading…') : t('account.dataExport.download', 'Download export file')}
+                {isDownloading ? 'Downloading…' : 'Download export file'}
               </Button>
             </div>
           )}
@@ -175,9 +162,7 @@ export function DataExportSection() {
           {status === 'expired' && (
             <div>
               <p style={{ margin: '0 0 var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-danger)' }}>
-                {t('account.dataExport.expired', 'This export link expired on')}{' '}
-                {formatDateTime(exportData.expiresAt, timeZone)}. For privacy and security, temporary
-                files are removed. You can generate a fresh export anytime.
+                This export link expired on {formatDateTime(exportData.expiresAt, timeZone)}. For privacy and security, temporary files are removed. You can generate a fresh export anytime.
               </p>
               <Button type="button" onClick={handleOpenModal}>
                 Request new export
@@ -188,52 +173,48 @@ export function DataExportSection() {
           {status === 'failed' && (
             <div>
               <p style={{ margin: '0 0 var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--color-danger)' }}>
-                {t('account.dataExport.failed', 'Generation failed:')} {exportData.errorMessage ?? t('account.dataExport.fallbackError', 'An error occurred while compiling your export.')}
+                Generation failed: {exportData.errorMessage ?? 'An error occurred while compiling your export.'}
               </p>
               <Button type="button" onClick={handleOpenModal}>
-                {t('common.tryAgain', 'Try again')}
+                Try again
               </Button>
             </div>
           )}
         </div>
       )}
 
-      <Dialog
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        labelledBy="modal-reauth-title"
-        describedBy="modal-reauth-description"
-        overlayClassName={styles.modalOverlay}
-        panelClassName={styles.modal}
-      >
-        <h3 id="modal-reauth-title" className={styles.modalTitle}>
-          {t('account.dataExport.modalTitle', 'Confirm your password')}
-        </h3>
-        <p id="modal-reauth-description" className={styles.modalText}>
-          {t('account.dataExport.modalDescription', 'To protect sensitive health information, please enter your account password to confirm this data export request.')}
-        </p>
-        <form onSubmit={handleSubmitRequest} noValidate>
-          <TextField
-            label={t('account.dataExport.passwordLabel', 'Account password')}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            error={modalError ?? undefined}
-            required
-          />
-          <div className={styles.modalActions}>
-            <Button type="button" variant="secondary" onClick={handleCloseModal}>
-              {t('common.cancel', 'Cancel')}
-            </Button>
-            <Button type="submit" loading={requestMutation.isPending}>
-              {requestMutation.isPending
-                ? t('account.dataExport.verifying', 'Verifying…')
-                : t('account.dataExport.confirmRequest', 'Confirm & request')}
-            </Button>
+      {isModalOpen && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="modal-reauth-title">
+          <div className={styles.modal}>
+            <h3 id="modal-reauth-title" className={styles.modalTitle}>
+              Confirm your password
+            </h3>
+            <p className={styles.modalText}>
+              To protect sensitive health information, please enter your account password to confirm this data export
+              request.
+            </p>
+            <form onSubmit={handleSubmitRequest}>
+              <TextField
+                label="Account password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+                required
+              />
+              {modalError && <FormError message={modalError} />}
+              <div className={styles.modalActions}>
+                <Button type="button" variant="secondary" onClick={handleCloseModal}>
+                  Cancel
+                </Button>
+                <Button type="submit" loading={requestMutation.isPending}>
+                  {requestMutation.isPending ? 'Verifying…' : 'Confirm & request'}
+                </Button>
+              </div>
+            </form>
           </div>
-        </form>
-      </Dialog>
+        </div>
+      )}
     </section>
   );
 }

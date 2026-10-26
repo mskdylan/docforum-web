@@ -5,12 +5,10 @@ import { useKeyboardShortcuts, DEFAULT_SHORTCUTS } from '../hooks/useKeyboardSho
 import { Button } from '../components/Button';
 import { CommandPalette, CommandPaletteAction } from '../components/CommandPalette';
 import { ShortcutsHelp } from '../components/ShortcutsHelp';
-import { ErrorBoundary } from '../components/ErrorBoundary';
 import { QueuePanel } from '../features/queue/components/QueuePanel';
 import { TodayAppointments } from '../features/doctor-today/components/TodayAppointments';
 import { DoctorInbox } from '../features/messaging/components/DoctorInbox';
 import { UnreadBadge } from '../features/messaging/components/UnreadBadge';
-import { useT } from '../i18n/useT';
 import { AbnormalResultsInbox } from '../features/results/components/AbnormalResultsInbox';
 import styles from './DoctorDashboardPage.module.css';
 
@@ -19,7 +17,6 @@ export function DoctorDashboardPage() {
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const t = useT();
 
   const bindings: Record<string, string> = Object.fromEntries(
     DEFAULT_SHORTCUTS.map((b) => [b.action, b.key]),
@@ -44,7 +41,7 @@ export function DoctorDashboardPage() {
   const actions: CommandPaletteAction[] = [
     {
       id: 'queue',
-      label: t('doctor.action.queue', "Open today's queue"),
+      label: "Open today's queue",
       category: 'navigation',
       shortcut: 'mod+1',
       run: () => {
@@ -53,7 +50,7 @@ export function DoctorDashboardPage() {
     },
     {
       id: 'inbox',
-      label: t('doctor.action.inbox', 'Open messages inbox'),
+      label: 'Open messages inbox',
       category: 'navigation',
       shortcut: 'mod+2',
       run: () => {
@@ -62,7 +59,7 @@ export function DoctorDashboardPage() {
     },
     {
       id: 'consultation',
-      label: t('doctor.action.consultation', 'Start consultation'),
+      label: 'Start consultation',
       category: 'context',
       shortcut: 'mod+3',
       run: () => {
@@ -72,7 +69,7 @@ export function DoctorDashboardPage() {
     },
     {
       id: 'insights',
-      label: t('doctor.action.insights', 'Open practice insights'),
+      label: 'Open practice insights',
       category: 'navigation',
       shortcut: 'mod+4',
       run: () => {
@@ -95,41 +92,32 @@ export function DoctorDashboardPage() {
   return (
     <div className="container">
       <header className={styles.dashboardHeader}>
-        <h1>{t('doctor.title', 'Doctor dashboard')}</h1>
+        <h1>Doctor dashboard</h1>
         <div className={styles.dashboardHeaderRight}>
           <UnreadBadge />
           <Button variant="secondary" onClick={() => navigate('/doctor/insights')}>
-            {t('doctor.insightsButton', 'Practice insights')}
+            Practice insights
           </Button>
           <Button variant="secondary" onClick={() => setHelpOpen(true)}>
-            {t('doctor.shortcutsButton', 'Shortcuts (?)')}
+            Shortcuts (?)
           </Button>
           <Button onClick={() => setPaletteOpen(true)}>
-            {t('doctor.paletteButton', 'Command palette (⌘K)')}
+            Command palette (⌘K)
           </Button>
         </div>
       </header>
 
-      <ErrorBoundary level="section">
-        <QueuePanel />
-      </ErrorBoundary>
-
-      <ErrorBoundary level="section">
-        <TodayAppointments />
-      </ErrorBoundary>
+      <QueuePanel />
+      <TodayAppointments />
 
       <div className={styles.dashboardGrid}>
-        <ErrorBoundary level="section">
-          <section className={styles.card}>
-            <h2>{t('doctor.messagesTitle', 'Messages')}</h2>
-            <DoctorInbox />
-          </section>
-        </ErrorBoundary>
-        <ErrorBoundary level="section">
-          <section className={styles.card}>
-            <AbnormalResultsInbox />
-          </section>
-        </ErrorBoundary>
+        <section className={styles.card}>
+          <h2>Messages</h2>
+          <DoctorInbox />
+        </section>
+        <section className={styles.card}>
+          <AbnormalResultsInbox />
+        </section>
       </div>
 
       <CommandPalette
@@ -141,12 +129,7 @@ export function DoctorDashboardPage() {
 
       <div className={styles.consultationPlaceholder}>
         <p>
-          {user
-            ? t('doctor.signedInAs', 'Signed in as {email} ({role})', {
-                email: user.email,
-                role: user.role,
-              })
-            : ''}
+          {user ? `Signed in as ${user.email} (` + user.role + ')' : ''}
         </p>
       </div>
     </div>

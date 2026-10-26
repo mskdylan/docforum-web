@@ -52,7 +52,7 @@
 
 .tabActive {
   background: var(--color-accent);
-  color: var(--color-accent-contrast);
+  color: #ffffff;
   border-color: var(--color-accent);
 }
 
@@ -75,7 +75,7 @@
   gap: var(--space-3);
   max-height: 600px;
   overflow-y: auto;
-  padding-inline-end: var(--space-2);
+  padding-right: var(--space-2);
 }
 
 .mapColumn {
@@ -100,7 +100,8 @@
 .mapTilesGrid {
   position: absolute;
   top: 0;
-  inset-inline: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -118,7 +119,8 @@
 .mapOverlays {
   position: absolute;
   top: 0;
-  inset-inline: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
   pointer-events: none;
 }
@@ -160,7 +162,7 @@
 .pinIcon {
   transform: rotate(45deg);
   font-size: 11px;
-  color: var(--color-accent-contrast);
+  color: #ffffff;
 }
 
 .markerLabel {
@@ -178,7 +180,7 @@
 .mapAttribution {
   position: absolute;
   bottom: 0;
-  inset-inline-end: 0;
+  right: 0;
   padding: 2px 8px;
   background: rgba(255, 255, 255, 0.85);
   font-size: 10px;

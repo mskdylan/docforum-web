@@ -118,9 +118,6 @@ export function PracticeInsightsView() {
       <div className={styles.container}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-12)' }}>
           <Spinner size={24} />
-          <span className="srOnly" role="status">
-            Loading practice insights…
-          </span>
         </div>
       </div>
     );
@@ -130,7 +127,7 @@ export function PracticeInsightsView() {
   const insights: DoctorPracticeInsights = data ?? DEFAULT_MOCK_INSIGHTS;
 
   return (
-    <section className={styles.container} aria-label="Practice insights dashboard">
+    <div className={styles.container} aria-label="Practice insights dashboard">
       <header className={styles.header}>
         <div className={styles.titleRow}>
           <div>
@@ -179,6 +176,6 @@ export function PracticeInsightsView() {
         referrals={insights.referrals}
         messages={insights.messages}
       />
-    </section>
+    </div>
   );
 }

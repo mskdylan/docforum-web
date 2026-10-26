@@ -1,3 +1,5 @@
+// Must run before any other module can compile a schema — see the file.
+import './zod-csp';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { init } from '@sentry/react';
@@ -26,7 +28,7 @@ const Router = useHashRouter ? HashRouter : BrowserRouter;
 // login screen mid-boot).
 if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCKS === 'true') {
   const { startMockApi } = await import('./mocks/setup');
-  await startMockApi();
+  startMockApi();
 }
 
 // Enable preview session when previewRole query param is set (useful for screenshots & review)

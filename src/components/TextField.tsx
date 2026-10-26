@@ -5,16 +5,11 @@ import styles from './TextField.module.css';
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
-  /** Persistent guidance, announced alongside an error. */
-  hint?: string;
 }
 
-export function TextField({ label, error, hint, id, ...rest }: TextFieldProps) {
+export function TextField({ label, error, id, ...rest }: TextFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
-  const hintId = hint ? `${inputId}-hint` : undefined;
-  const errorId = error ? `${inputId}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className={styles.field}>
@@ -25,16 +20,11 @@ export function TextField({ label, error, hint, id, ...rest }: TextFieldProps) {
         id={inputId}
         className={styles.input}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy}
+        aria-describedby={error ? `${inputId}-error` : undefined}
         {...rest}
       />
-      {hint && (
-        <p id={hintId} className={styles.hint}>
-          {hint}
-        </p>
-      )}
       {error && (
-        <p id={errorId} className={styles.error} role="alert">
+        <p id={`${inputId}-error`} className={styles.error} role="alert">
           {error}
         </p>
       )}

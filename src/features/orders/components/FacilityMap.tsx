@@ -108,7 +108,6 @@ export function FacilityMap({
                 onClick={() => onMarkerClick?.(fac)}
                 role="button"
                 tabIndex={0}
-                aria-pressed={isSelected}
                 aria-label={`Marker for ${fac.name}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
